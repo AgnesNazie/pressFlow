@@ -1,10 +1,16 @@
-package se.lexicon.pressflow.model;
+package se.lexicon.pressflow.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 @Entity
 @Table(name = "articles")
+@Setter
+@Getter
+@NoArgsConstructor
 public class Article {
 
     @Id
@@ -30,6 +36,11 @@ public class Article {
     @ManyToOne
     @JoinColumn(name = "editor_id")
     private User editor;
+
+    @ManyToOne
+    @JoinColumn(name = "todo_id")
+    private Todo todo;
+
 
     // Getters & Setter
 }

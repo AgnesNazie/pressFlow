@@ -1,4 +1,4 @@
-package se.lexicon.pressflow.model;
+package se.lexicon.pressflow.entity;
 
 public enum ArticleStatus {
     DRAFT,
