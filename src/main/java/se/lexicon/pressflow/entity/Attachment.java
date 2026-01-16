@@ -3,6 +3,9 @@ package se.lexicon.pressflow.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "attachments")
 @Data
@@ -21,11 +24,17 @@ public class Attachment {
     private String fileType;
 
     @Lob
+    @Column(columnDefinition = "LONGBLOB")
     private byte[] data; // Store the file content
 
     @ManyToOne
     @JoinColumn(name = "todo_id")
     private Todo todo;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "article_id", nullable = false)
+    private Article article;
+
 
     public Attachment(String fileName, String fileType, byte[] data) {
         this.fileName = fileName;
@@ -41,5 +50,10 @@ public class Attachment {
             todo.getAttachments().add(this);
         }
     }
+
+    public void setArticle(Article article) {
+        this.article = article;
+    }
+
 
 }

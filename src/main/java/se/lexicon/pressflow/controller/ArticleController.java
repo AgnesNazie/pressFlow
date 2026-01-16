@@ -6,18 +6,24 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import se.lexicon.pressflow.dto.ArticleCreateDto;
+import se.lexicon.pressflow.dto.ArticleDto;
+import se.lexicon.pressflow.dto.ArticleUpdateDto;
 import se.lexicon.pressflow.entity.Article;
 import se.lexicon.pressflow.service.ArticleService;
 
+import java.security.Principal;
 import java.util.List;
 @RestController
 @RequestMapping("/api/articles")
 @Validated
 @SecurityRequirement(name = "Bearer Authentication")  // Swagger security
-@Tag(name = "Article API", description = "API endpoints for managing articles")
+@Tag(name = "Article API", description = "API endpoints for managing articles, attachments, and submissions")
 public class ArticleController {
 
 
@@ -29,66 +35,66 @@ public class ArticleController {
 
     // Create a new article (any authenticated user)
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED) // 201 Created
-    public Article createArticle(@RequestBody @NotNull @Valid Article article) {
-        System.out.println("Creating article: " + article.getTitle());
-        return articleService.createArticle(article);
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @ResponseStatus(HttpStatus.CREATED)
+    public ArticleDto createArticle(
+            @RequestPart("article") @Valid ArticleCreateDto articleDto,
+            @RequestPart(value = "files", required = false) MultipartFile[] files,
+            Principal principal
+    ) {
+        return articleService.create(articleDto, files, principal);
     }
 
-    // Get all articles (any authenticated user)
+    // 📄 Get all articles
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
     @GetMapping
-    @ResponseStatus(HttpStatus.OK) // 200 OK
-    public List<Article> getAllArticles() {
-        System.out.println("Fetching all articles");
-        return articleService.getAllArticles();
+    @ResponseStatus(HttpStatus.OK)
+    public List<ArticleDto> getAllArticles() {
+        return articleService.findAll();
     }
 
-    // Get article by ID
+    // 🔍 Get article by ID
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
     @GetMapping("/{id}")
-    @ResponseStatus(HttpStatus.OK) // 200 OK
-    public Article getArticleById(
-            @PathVariable("id")
-            @Positive(message = "Id must be a positive number")
-            Long id) {
-        System.out.println("Fetching article with ID: " + id);
-        return articleService.getArticleById(id);
+    @ResponseStatus(HttpStatus.OK)
+    public ArticleDto getArticleById(
+            @PathVariable @Positive Long id
+    ) {
+        return articleService.findById(id);
     }
 
-    // Submit article for review
-    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    // 📤 Submit article for review
+    @PreAuthorize("hasRole('USER')")
     @PostMapping("/{id}/submit")
-    @ResponseStatus(HttpStatus.OK) // 200 OK
-    public Article submitArticle(
-            @PathVariable("id")
-            @Positive(message = "Id must be a positive number")
-            Long id) {
-        System.out.println("Submitting article with ID: " + id);
-        return articleService.submitArticle(id);
+    @ResponseStatus(HttpStatus.OK)
+    public ArticleDto submitArticle(
+            @PathVariable @Positive Long id,
+            Principal principal
+    ) {
+        return articleService.submit(id, principal);
     }
 
-    // Update an article (only ADMIN or the author)
-    @PreAuthorize("hasRole('ADMIN') or #article.authorId == authentication.principal.username")
-    @PutMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT) // 204 No Content
+    // ✏️ Update article (author only)
+    @PreAuthorize("hasRole('USER')")
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateArticle(
-            @PathVariable("id")
-            @Positive(message = "Id must be a positive number") Long id,
-            @RequestBody @NotNull @Valid Article article) {
-        System.out.println("Updating article with ID: " + id);
-        articleService.updateArticle(article);
+            @PathVariable @Positive Long id,
+            @RequestPart("article") @Valid ArticleUpdateDto articleDto,
+            @RequestPart(value = "files", required = false) MultipartFile[] files,
+            Principal principal
+    ) {
+        articleService.update(id, articleDto, files, principal);
     }
 
-    // Delete an article (only ADMIN)
+    // 🗑 Delete article (ADMIN only)
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT) // 204 No Content
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteArticle(
-            @PathVariable("id")
-            @Positive(message = "Id must be a positive number") Long id) {
-        System.out.println("Deleting article with ID: " + id);
-        articleService.deleteArticle(id);
+            @PathVariable @Positive Long id
+    ) {
+        articleService.delete(id);
     }
+
 }

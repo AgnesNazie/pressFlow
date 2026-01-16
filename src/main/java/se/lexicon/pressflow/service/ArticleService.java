@@ -1,17 +1,21 @@
 package se.lexicon.pressflow.service;
 
 
-import se.lexicon.pressflow.entity.Article;
+import org.springframework.web.multipart.MultipartFile;
+import se.lexicon.pressflow.dto.ArticleCreateDto;
+import se.lexicon.pressflow.dto.ArticleDto;
+import se.lexicon.pressflow.dto.ArticleUpdateDto;
 
+import java.security.Principal;
 import java.util.List;
 
 
 public interface ArticleService {
 
-    Article createArticle(Article article);
-    List<Article> getAllArticles();
-    Article updateArticle(Article article);
-    Article getArticleById(Long id);
-    void deleteArticle(Long id);
-    Article submitArticle(Long id);
+    ArticleDto create(ArticleCreateDto articleDto, MultipartFile[] files, Principal principal);
+    List<ArticleDto> findAll();
+    ArticleDto findById(Long id);
+    ArticleDto submit(Long id, Principal principal);
+    void update(Long id, ArticleUpdateDto articleDto,MultipartFile[] files, Principal principal);
+    void delete(Long id);
 }
